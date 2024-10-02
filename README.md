@@ -1,4 +1,4 @@
-# Speckle Automate function template - Python
+# Speckle Automate function - Node.js
 
 This template repository is for a Speckle Automate function written in Node
 
@@ -13,7 +13,7 @@ Register the function
 
 ### Add new dependencies
 
-To add new Python package dependencies to the project, use the following:
+To add new Yarn package dependencies to the project, use the following:
 `$ yarn add <package-name>`
 
 ### Change launch variables
@@ -42,7 +42,7 @@ Create a new repo from this template, and use the create new code.
 ## Developer Requirements
 
 1. Install the following:
-    - [Node 18](https://www.python.org/downloads/)
+    - [Node 18](https://nodejs.org/en/download/package-manager)
 1. Run `corepack enable && yarn install` to install the required dependencies.
 
 ## Building and Testing
