@@ -12,22 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.6
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.3.2
-          virtualenvs-create: false
-          virtualenvs-in-project: false
-          installer-parallel: true
+          node-version: '22'
+          cache: 'yarn'
       - name: Restore dependencies
-        run: poetry install --no-root
-      - name: Extract functionInputSchema
-        id: extract_schema
-        run: |
-          python main.py generate_schema ${HOME}/${{ env.FUNCTION_SCHEMA_FILE_NAME }}
+        run: yarn install
+      # - name: Extract functionInputSchema
+      #   id: extract_schema
+      #   run: |
+      #     python main.py generate_schema ${HOME}/${{ env.FUNCTION_SCHEMA_FILE_NAME }}
       - name: Speckle Automate Function - Build and Publish
         uses: specklesystems/speckle-automate-github-composite-action@0.8.1
         with:

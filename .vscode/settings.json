@@ -1,9 +1,13 @@
 {
-  "cSpell.words": [
-    "camelcase",
-    "pydantic",
-    "stringcase",
-    "typer"
-  ],
-  "python.defaultInterpreterPath": ".venv/bin/python"
+  "explorer.confirmDelete": false,
+  "files.associations": {},
+  "editor.formatOnPaste": true,
+  "editor.multiCursorModifier": "ctrlCmd",
+  "editor.snippetSuggestions": "top",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "search.useParentIgnoreFiles": true
 }

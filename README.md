@@ -1,7 +1,6 @@
 # Speckle Automate function template - Python
 
-This template repository is for a Speckle Automate function written in Python
-using the [specklepy](https://pypi.org/project/specklepy/) SDK to interact with Speckle data.
+This template repository is for a Speckle Automate function written in Node
 
 This template contains the full scaffolding required to publish a function to the Automate environment.
 It also has some sane defaults for development environment setups.
@@ -15,7 +14,7 @@ Register the function
 ### Add new dependencies
 
 To add new Python package dependencies to the project, use the following:
-`$ poetry add pandas`
+`$ yarn add <package-name>`
 
 ### Change launch variables
 
@@ -35,21 +34,20 @@ Create a new repo from this template, and use the create new code.
 
 ## Getting Started with Creating Your Own Speckle Function
 
-1. [Register](https://automate.speckle.dev/) your Function with [Speckle Automate](https://automate.speckle.dev/) and select the Python template.
+1. [Register](https://automate.speckle.dev/) your Function with [Speckle Automate](https://automate.speckle.dev/) and select the Node typescript template.
 1. A new repository will be created in your GitHub account.
-1. Make changes to your Function in `main.py`. See below for the Developer Requirements and instructions on how to test.
+1. Make changes to your Function in `src/main.ts`. See below for the Developer Requirements and instructions on how to test.
 1. To create a new version of your Function, create a new [GitHub release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) in your repository.
 
 ## Developer Requirements
 
 1. Install the following:
-    - [Python 3](https://www.python.org/downloads/)
-    - [Poetry](https://python-poetry.org/docs/#installing-with-the-official-installer)
-1. Run `poetry shell && poetry install` to install the required Python packages.
+    - [Node 18](https://www.python.org/downloads/)
+1. Run `corepack enable && yarn install` to install the required dependencies.
 
 ## Building and Testing
 
-The code can be tested locally by running `poetry run pytest`.
+The code can be tested locally by running `yarn test`.
 
 ### Building and running the Docker Container Image
 
@@ -68,7 +66,7 @@ Once you have Docker running on your local machine:
 1. Run the following command:
 
     ```bash
-    docker build -f ./Dockerfile -t speckle_automate_python_example .
+    docker build -f ./Dockerfile -t speckle_automate_nodets_example .
     ```
 
 #### Running the Docker Container Image
@@ -78,8 +76,8 @@ Once the GitHub Action has built the image, it is sent to Speckle Automate. When
 1. To then run the Docker Container Image, run the following command:
 
     ```bash
-    docker run --rm speckle_automate_python_example \
-    python -u main.py run \
+    docker run --rm speckle_automate_nodets_example \
+    yarn start \
     '{"projectId": "1234", "modelId": "1234", "branchName": "myBranch", "versionId": "1234", "speckleServerUrl": "https://speckle.xyz", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "1234", "functionId": "1234", "functionName": "my function", "functionLogo": "base64EncodedPng"}' \
     '{}' \
     yourSpeckleServerAuthenticationToken
@@ -87,7 +85,7 @@ Once the GitHub Action has built the image, it is sent to Speckle Automate. When
 
 Let's explain this in more detail:
 
-`docker run—-rm speckle_automate_python_example` tells Docker to run the Docker Container Image we built earlier. `speckle_automate_python_example` is the name of the Docker Container Image. The `--rm` flag tells Docker to remove the container after it has finished running, freeing up space on your machine.
+`docker run—-rm speckle_automate_nodets_example` tells Docker to run the Docker Container Image we built earlier. `speckle_automate_nodets_example` is the name of the Docker Container Image. The `--rm` flag tells Docker to remove the container after it has finished running, freeing up space on your machine.
 
 The line `python -u main.py run` is the command run inside the Docker Container Image. The rest of the command is the arguments passed to the command. The arguments are:
 
@@ -97,4 +95,4 @@ The line `python -u main.py run` is the command run inside the Docker Container 
 
 ## Resources
 
-- [Learn](https://speckle.guide/dev/python.html) more about SpecklePy and interacting with Speckle from Python.
+- [Learn](https://speckle.guide/dev) more about interacting with Speckle using code.
