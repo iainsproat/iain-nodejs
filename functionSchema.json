@@ -1,4 +1,8 @@
 {
   "type": "object",
-  "properties": {}
+  "properties": {
+    "blobId": {
+      "type": "string"
+    }
+  }
 }
