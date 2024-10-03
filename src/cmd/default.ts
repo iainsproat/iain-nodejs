@@ -1,6 +1,8 @@
-import { functionInputSchema } from '@/inputSchema.js'
+import { functionInputSchema } from '@/types/inputSchema.js'
 import { z } from 'zod'
 import { systemInputSchema } from '@/types/systemInput.js'
+import { speckleTokenSchema } from '@/types/tokenSchema.js'
+
 import { inputFromJson } from '@/cmd/helpers.js'
 import { CommandModule, Argv } from 'yargs'
 
@@ -38,8 +40,9 @@ export const defaultCommand = {
       argv.function_defined_inputs
     )
 
+    const tokenInput = speckleTokenSchema.parse(argv.speckle_token)
     console.log(systemInput)
     console.log(functionInput)
-    console.log(argv.speckle_token)
+    console.log(tokenInput)
   }
 }
