@@ -9,6 +9,8 @@ COPY . /home/speckle
 # We set the working directory to be the /home/speckle directory; all of our files will be copied here.
 WORKDIR /home/speckle
 
-RUN corepack enable && yarn install
+RUN corepack enable && yarn install && yarn build
+
+# TODO create a two stage build to reduce the size of the final image
 
 CMD ["yarn", "start"]
