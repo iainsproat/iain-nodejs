@@ -2,7 +2,10 @@ import { FunctionInput } from '@/types/inputSchema.js'
 import { LimitedFunctionData } from '@/types/limitedFunctionData.js'
 import { SystemInput } from '@/types/systemInput.js'
 import { SpeckleToken } from '@/types/tokenSchema.js'
-import { spawn } from 'node:child_process'
+import { buildObservable } from '@/app/clients/observable.js'
+import { retrieveAndHydrateReportFactory } from './service/retrieveAndHydrateReport.js'
+import { getBlob, storeBlob } from '@/app/clients/blobStorage.js'
+import { compressAndPublishResultsFactory } from './service/compressAndPublishResults.js'
 
 export type ObservableRunner = (params: {
   systemInput: SystemInput
@@ -10,92 +13,36 @@ export type ObservableRunner = (params: {
   speckleToken: SpeckleToken
 }) => Promise<void>
 export const observableRunnerFactory = (): ObservableRunner => {
-  return async (_params) => {
-    // const { systemInput, functionInput, speckleToken } = params
-    console.log('🎶 I am running my application 🎶')
-    //TODO pull markdown files from blob storage
-    //TODO run this directly instead of via yarn
+  return async (params) => {
+    const { systemInput, functionInput, speckleToken } = params
+    console.log('💙 Retrieving input report')
+    await retrieveAndHydrateReportFactory({
+      getBlob
+    })({
+      ...systemInput,
+      ...functionInput,
+      token: speckleToken
+    })
 
-    const envData: LimitedFunctionData = {
-      speckleServerUrl: _params.systemInput.speckleServerUrl,
-      versionId: _params.systemInput.versionId,
-      modelId: _params.systemInput.modelId,
-      projectId: _params.systemInput.projectId,
-      speckleToken: _params.speckleToken
-    }
-    
-    const reason = await runProcessWithTimeout(
-      'yarn',
-      ['build:observable'],
-      { AUTOMATE_DATA: JSON.stringify(envData) },
-      10 * 60 * 1000
+    const result = await buildObservable(
+      { timeOutSeconds: 10 * 60 },
+      systemInput,
+      speckleToken
     )
-    console.log(`🎶 I am done running my application 🎶: ${JSON.stringify(reason)}`)
-    //TODO store html to blob storage
+    console.log(
+      `🚀 Built the Observable application 🎶: ${JSON.stringify(result)}`
+    )
+
+    const publishResults = await compressAndPublishResultsFactory({
+      storeBlob
+    })({
+      ...systemInput,
+      ...functionInput,
+      token: speckleToken,
+      outputDirPath: '/tmp/generated'
+    })
+    console.log(
+      `🏁 Published the Observable application: ${JSON.stringify(publishResults)}`
+    )
   }
-}
-
-function handleData(data: Buffer | string) {
-  try {
-    Buffer.isBuffer(data) && (data = data.toString())
-    data.split('\n').forEach((line) => {
-      if (!line) return
-      try {
-        JSON.parse(line) // verify if the data is already in JSON format
-        process.stdout.write(line)
-        process.stdout.write('\n')
-      } catch {
-        wrapLogLine(line)
-      }
-    })
-  } catch {
-    wrapLogLine(JSON.stringify(data))
-  }
-}
-
-function wrapLogLine(line: string) {
-  console.log(line)
-}
-
-function runProcessWithTimeout(
-  cmd: string,
-  cmdArgs: string[],
-  extraEnv: Record<string, string>,
-  timeoutMs: number
-) {
-  return new Promise((resolve, reject) => {
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
-
-    childProc.stdout.on('data', (data: Buffer) => {
-      handleData(data)
-    })
-
-    childProc.stderr.on('data', (data: Buffer) => {
-      handleData(data)
-    })
-
-    let timedOut = false
-
-    const timeout = setTimeout(() => {
-      timedOut = true
-      childProc.kill(9)
-      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
-
-      reject(rejectionReason)
-    }, timeoutMs)
-
-    childProc.on('close', (code: number) => {
-      if (timedOut) {
-        return // ignore `close` calls after killing (the promise was already rejected)
-      }
-
-      clearTimeout(timeout)
-
-      if (code === 0) {
-        resolve({ status: 'success' })
-      } else {
-        reject({ status: 'fail', message: `Parser exited with code ${code}` })
-      }
-    })
-  })
 }
