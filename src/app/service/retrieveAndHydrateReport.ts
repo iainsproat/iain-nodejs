@@ -1,6 +1,6 @@
 import type { GetBlob } from '@/app/clients/blobStorage.js'
-import { createWriteStream } from 'node:fs'
-import zlib from 'zlib'
+import { mkdir } from 'node:fs/promises'
+import * as tar from 'tar'
 
 export const retrieveAndHydrateReportFactory = (deps: { getBlob: GetBlob }) => {
   const { getBlob } = deps
@@ -11,9 +11,14 @@ export const retrieveAndHydrateReportFactory = (deps: { getBlob: GetBlob }) => {
     token: string
   }) => {
     const blob = await getBlob({ ...params, streamId: params.projectId })
-    const gzipStream = zlib.createGzip()
-    const writeStream = createWriteStream('/tmp/generated')
 
-    blob.data.pipe(gzipStream).pipe(writeStream)
+    //FIXME is this async? how to await this?
+    await mkdir('/tmp/report', { recursive: true })
+    blob.data.pipe(
+      tar.x({
+        strip: 1,
+        cwd: '/tmp/report'
+      })
+    )
   }
 }

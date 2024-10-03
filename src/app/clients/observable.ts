@@ -1,7 +1,9 @@
 import { spawn } from 'node:child_process'
+import { mkdir } from 'node:fs/promises'
 
 export const buildObservable = async (params: { timeOutSeconds: number }) => {
   const { timeOutSeconds } = params
+  await mkdir('/tmp/generated', { recursive: true })
   const reason = await runProcessWithTimeout(
     'yarn',
     ['build:observable'],
