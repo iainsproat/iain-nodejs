@@ -3,6 +3,7 @@
 
 function_inputs.json
 node_modules/
+report2/
 
 **/.env
 **/.envrc
