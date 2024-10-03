@@ -13,7 +13,7 @@ export type GetBlob = (params: {
 export const getBlob: GetBlob = async (params) => {
   const { speckleServerUrl, streamId, blobId, token } = params
   const response = await axios.get(
-    `${speckleServerUrl}api/stream/${streamId}/blob/${blobId}`,
+    `${speckleServerUrl}/api/stream/${streamId}/blob/${blobId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -53,7 +53,7 @@ export const storeBlob: StoreBlob = async (params) => {
   form.append(fileName, blob)
 
   const response = await axios.post(
-    `${speckleServerUrl}api/stream/${streamId}/blob`,
+    `${speckleServerUrl}/api/stream/${streamId}/blob`,
     form,
     {
       headers: {
