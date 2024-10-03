@@ -4,11 +4,6 @@ import { systemInputSchema } from '@/types/systemInput.js'
 import { inputFromJson } from '@/cmd/helpers.js'
 import { CommandModule, Argv } from 'yargs'
 
-interface CommandArgs {
-  arg?: string;
-}
-
-
 export const defaultCommand = {
   command: '$0 <system_inputs> <function_defined_inputs> <speckle_token>',
   describe: 'default command',
