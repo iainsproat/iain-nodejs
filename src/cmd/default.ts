@@ -28,7 +28,11 @@ export const defaultCommand = {
         type: 'string'
       })
   },
-  handler: async (argv: any) => {
+  handler: async (argv: {
+    system_inputs: unknown
+    function_defined_inputs: unknown
+    speckle_token: unknown
+  }) => {
     const systemInput = inputFromJson<SystemInput>(
       systemInputSchema,
       argv.system_inputs
@@ -39,11 +43,8 @@ export const defaultCommand = {
     )
 
     const tokenInput = speckleTokenSchema.parse(argv.speckle_token)
-    console.log(systemInput)
-    console.log(functionInput)
-    console.log(tokenInput)
 
-    const observableRunner = await (observableRunnerFactory())({
+    await observableRunnerFactory()({
       systemInput,
       functionInput,
       speckleToken: tokenInput
