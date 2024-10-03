@@ -1,4 +1,5 @@
 import { FunctionInput } from '@/types/inputSchema.js'
+import { LimitedFunctionData } from '@/types/limitedFunctionData.js'
 import { SystemInput } from '@/types/systemInput.js'
 import { SpeckleToken } from '@/types/tokenSchema.js'
 import { buildObservable } from '@/app/clients/observable.js'
@@ -23,7 +24,11 @@ export const observableRunnerFactory = (): ObservableRunner => {
       token: speckleToken
     })
 
-    const result = await buildObservable({ timeOutSeconds: 10 * 60 })
+    const result = await buildObservable(
+      { timeOutSeconds: 10 * 60 },
+      systemInput,
+      speckleToken
+    )
     console.log(
       `🚀 Built the Observable application 🎶: ${JSON.stringify(result)}`
     )
