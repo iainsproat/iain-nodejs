@@ -1,10 +1,11 @@
-import { functionInputSchema } from '@/types/inputSchema.js'
+import { FunctionInput, functionInputSchema } from '@/types/inputSchema.js'
 import { z } from 'zod'
-import { systemInputSchema } from '@/types/systemInput.js'
+import { systemInputSchema, SystemInput } from '@/types/systemInput.js'
 import { speckleTokenSchema } from '@/types/tokenSchema.js'
 
 import { inputFromJson } from '@/cmd/helpers.js'
-import { CommandModule, Argv } from 'yargs'
+import { Argv } from 'yargs'
+import { observableRunnerFactory } from '@/app/app.js'
 
 export const defaultCommand = {
   command: '$0 <system_inputs> <function_defined_inputs> <speckle_token>',
@@ -28,9 +29,6 @@ export const defaultCommand = {
       })
   },
   handler: (argv: any) => {
-    type SystemInput = z.infer<typeof systemInputSchema>
-    type FunctionInput = z.infer<typeof functionInputSchema>
-
     const systemInput = inputFromJson<SystemInput>(
       systemInputSchema,
       argv.system_inputs
@@ -44,5 +42,11 @@ export const defaultCommand = {
     console.log(systemInput)
     console.log(functionInput)
     console.log(tokenInput)
+
+    const observableRunner = observableRunnerFactory()({
+      systemInput,
+      functionInput,
+      speckleToken: tokenInput
+    })
   }
 }

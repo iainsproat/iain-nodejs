@@ -13,3 +13,5 @@ export const systemInputSchema = z.object({
   functionName: z.string(),
   functionLogo: z.string()
 })
+
+export type SystemInput = z.infer<typeof systemInputSchema>
