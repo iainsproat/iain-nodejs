@@ -38,13 +38,9 @@ function runProcessWithTimeout(
   return new Promise((resolve, reject) => {
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
-    childProc.stdout.on('data', () => {
-      //TODO log?
-    })
+    childProc.stdout.on('data', handleData)
 
-    childProc.stderr.on('data', () => {
-      //TODO log?
-    })
+    childProc.stderr.on('data', handleData)
 
     let timedOut = false
 
@@ -70,4 +66,26 @@ function runProcessWithTimeout(
       }
     })
   })
+}
+
+function handleData(data: Buffer | string) {
+  try {
+    Buffer.isBuffer(data) && (data = data.toString())
+    data.split('\n').forEach((line) => {
+      if (!line) return
+      try {
+        JSON.parse(line) // verify if the data is already in JSON format
+        process.stdout.write(line)
+        process.stdout.write('\n')
+      } catch {
+        wrapLogLine(line)
+      }
+    })
+  } catch {
+    wrapLogLine(JSON.stringify(data))
+  }
+}
+
+function wrapLogLine(line: string) {
+  console.log(line)
 }

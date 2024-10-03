@@ -2,7 +2,6 @@ import { csvFormat } from 'd3-dsv'
 import ObjectLoader from '@speckle/objectloader'
 import { gql, request } from 'graphql-request'
 
-class StfuLogger {}
 
 const automateData = JSON.parse(process.env.AUTOMATE_DATA)
 
