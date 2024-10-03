@@ -1,4 +1,4 @@
-# We use the official Python 3.11 image as our base image and will add our code to it. For more details, see https://hub.docker.com/_/python
+# We use the official node 22.9.0 image as our base image and will add our code to it. For more details, see https://hub.docker.com/_/node
 FROM node:22.9.0-bullseye-slim@sha256:80c9b96d59e83fa41e14e3d90953d52a875a60447efb74469cb195f0e64457bc
 
 # Copy all of our code and assets from the local directory into the /home/speckle directory of the container.

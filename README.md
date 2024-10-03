@@ -87,7 +87,7 @@ Let's explain this in more detail:
 
 `docker run—-rm speckle_automate_nodets_example` tells Docker to run the Docker Container Image we built earlier. `speckle_automate_nodets_example` is the name of the Docker Container Image. The `--rm` flag tells Docker to remove the container after it has finished running, freeing up space on your machine.
 
-The line `python -u main.py run` is the command run inside the Docker Container Image. The rest of the command is the arguments passed to the command. The arguments are:
+The line `yarn start` is the command run inside the Docker Container Image. The rest of the command is the arguments passed to the command. The arguments are:
 
 - `'{"projectId": "1234", "modelId": "1234", "branchName": "myBranch", "versionId": "1234", "speckleServerUrl": "https://speckle.xyz", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "1234", "functionId": "1234", "functionName": "my function", "functionLogo": "base64EncodedPng"}'` - the metadata that describes the automation and the function.
 - `{}` - the input parameters for the function the Automation creator can set. Here, they are blank, but you can add your parameters to test your function.
