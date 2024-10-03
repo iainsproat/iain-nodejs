@@ -1,7 +1,7 @@
 import { FunctionInput } from '@/types/inputSchema.js'
 import { SystemInput } from '@/types/systemInput.js'
 import { SpeckleToken } from '@/types/tokenSchema.js'
-import { spawn } from 'child_process'
+import { spawn } from 'node:child_process'
 
 export type ObservableRunner = (params: {
   systemInput: SystemInput
@@ -9,11 +9,15 @@ export type ObservableRunner = (params: {
   speckleToken: SpeckleToken
 }) => Promise<void>
 export const observableRunnerFactory = (): ObservableRunner => {
-  return async (params) => {
-    const { systemInput, functionInput, speckleToken } = params
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return async (_params) => {
+    // const { systemInput, functionInput, speckleToken } = params
     console.log('🎶 I am running my application 🎶')
-    const reason = await runProcessWithTimeout('yarn', ['build:observable'], {}, 10000)
+    //TODO pull markdown files from blob storage
+    //TODO run this directly instead of via yarn
+    const reason = await runProcessWithTimeout('yarn', ['build:observable'], {}, 10 * 60 * 1000)
     console.log(`🎶 I am done running my application 🎶: ${JSON.stringify(reason)}`)
+    //TODO store html to blob storage
   }
 }
 
