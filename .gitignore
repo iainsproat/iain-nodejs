@@ -155,3 +155,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+**/.observablehq/
+generated/
