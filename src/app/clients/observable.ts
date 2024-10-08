@@ -20,52 +20,68 @@ export const buildObservable = async (
     speckleToken
   }
 
-  const reason = await runProcessWithTimeout(
-    'yarn',
-    ['build:observable'],
-    { AUTOMATE_DATA: JSON.stringify(envData) },
-    timeOutSeconds * 1000
-  )
+  // const installDependencies = await runProcessWithTimeout({
+  //   cmd: 'yarn',
+  //   cmdArgs: ['install'],
+  //   extraEnv: {},
+  //   timeoutMs: timeOutSeconds * 1000,
+  //   cwd: '/tmp/report'
+  // })
+  // if (installDependencies.status === 'fail') {
+  //   return installDependencies
+  // }
+
+  const reason = await runProcessWithTimeout({
+    cmd: 'yarn',
+    cmdArgs: ['build:observable'],
+    extraEnv: { AUTOMATE_DATA: JSON.stringify(envData) },
+    timeoutMs: timeOutSeconds * 1000,
+    cwd: '/tmp/report'
+  })
   return reason
 }
 
-function runProcessWithTimeout(
-  cmd: string,
-  cmdArgs: string[],
-  extraEnv: Record<string, string>,
+function runProcessWithTimeout(params: {
+  cmd: string
+  cmdArgs: string[]
+  extraEnv: Record<string, string>
   timeoutMs: number
-) {
-  return new Promise((resolve, reject) => {
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
+  cwd: string
+}) {
+  const { cmd, cmdArgs, extraEnv, timeoutMs, cwd } = params
+  return new Promise<{ status: 'fail' | 'success'; message?: string }>(
+    (resolve, reject) => {
+      const childProc = spawn(cmd, cmdArgs, { cwd, env: { ...extraEnv } })
 
-    childProc.stdout.on('data', handleData)
+      childProc.stdout.on('data', handleData)
 
-    childProc.stderr.on('data', handleData)
+      childProc.stderr.on('data', handleData)
 
-    let timedOut = false
+      let timedOut = false
 
-    const timeout = setTimeout(() => {
-      timedOut = true
-      childProc.kill(9)
-      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
+      const timeout = setTimeout(() => {
+        timedOut = true
+        childProc.kill(9)
+        const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
 
-      reject({ status: 'fail', message: rejectionReason })
-    }, timeoutMs)
+        reject({ status: 'fail', message: rejectionReason })
+      }, timeoutMs)
 
-    childProc.on('close', (code: number) => {
-      if (timedOut) {
-        return // ignore `close` calls after killing (the promise was already rejected)
-      }
+      childProc.on('close', (code: number) => {
+        if (timedOut) {
+          return // ignore `close` calls after killing (the promise was already rejected)
+        }
 
-      clearTimeout(timeout)
+        clearTimeout(timeout)
 
-      if (code === 0) {
-        resolve({ status: 'success' })
-      } else {
-        reject({ status: 'fail', message: `Parser exited with code ${code}` })
-      }
-    })
-  })
+        if (code === 0) {
+          resolve({ status: 'success' })
+        } else {
+          reject({ status: 'fail', message: `Parser exited with code ${code}` })
+        }
+      })
+    }
+  )
 }
 
 function handleData(data: Buffer | string) {

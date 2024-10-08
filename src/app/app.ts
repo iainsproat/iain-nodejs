@@ -1,11 +1,12 @@
 import { FunctionInput } from '@/types/inputSchema.js'
-import { LimitedFunctionData } from '@/types/limitedFunctionData.js'
 import { SystemInput } from '@/types/systemInput.js'
 import { SpeckleToken } from '@/types/tokenSchema.js'
 import { buildObservable } from '@/app/clients/observable.js'
-import { retrieveAndHydrateReportFactory } from './service/retrieveAndHydrateReport.js'
+import { retrieveAndHydrateReportFactory } from '@/app/services/retrieveAndHydrateReport.js'
 import { getBlob, storeBlob } from '@/app/clients/blobStorage.js'
-import { compressAndPublishResultsFactory } from './service/compressAndPublishResults.js'
+import { compressAndPublishResultsFactory } from '@/app/services/compressAndPublishResults.js'
+import { publishAutomateResultFactory } from '@/app/services/automateResults.js'
+import { graphqlClientFactory } from '@/app/clients/graphql.js'
 
 export type ObservableRunner = (params: {
   systemInput: SystemInput
@@ -29,12 +30,18 @@ export const observableRunnerFactory = (): ObservableRunner => {
       systemInput,
       speckleToken
     )
-    console.log(
-      `🚀 Built the Observable application 🎶: ${JSON.stringify(result)}`
-    )
+    console.log(`🚀 Built the Observable application 🎶: ${JSON.stringify(result)}`)
+
+    const gqlClient = graphqlClientFactory({
+      speckleServerUrl: systemInput.speckleServerUrl,
+      speckleToken
+    })
 
     const publishResults = await compressAndPublishResultsFactory({
-      storeBlob
+      storeBlob,
+      publishAutomateResult: publishAutomateResultFactory({
+        gqlClient
+      })
     })({
       ...systemInput,
       ...functionInput,

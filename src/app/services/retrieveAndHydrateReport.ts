@@ -12,11 +12,11 @@ export const retrieveAndHydrateReportFactory = (deps: { getBlob: GetBlob }) => {
   }) => {
     const blob = await getBlob({ ...params, streamId: params.projectId })
 
+    await mkdir('/tmp/report', { recursive: true })
     //FIXME is this async? how to await this?
-    await mkdir('./report2', { recursive: true })
     blob.data.pipe(
       tar.x({
-        cwd: './report2'
+        cwd: '/tmp/report'
       })
     )
   }

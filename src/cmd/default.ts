@@ -1,5 +1,4 @@
 import { FunctionInput, functionInputSchema } from '@/types/inputSchema.js'
-import { z } from 'zod'
 import { systemInputSchema, SystemInput } from '@/types/systemInput.js'
 import { speckleTokenSchema } from '@/types/tokenSchema.js'
 
@@ -10,7 +9,7 @@ import { observableRunnerFactory } from '@/app/app.js'
 export const defaultCommand = {
   command: '$0 <system_inputs> <function_defined_inputs> <speckle_token>',
   describe: 'default command',
-  builder: (yargs: Argv<{}>) => {
+  builder: (yargs: Argv<unknown>) => {
     return yargs
       .positional('system_inputs', {
         describe:
