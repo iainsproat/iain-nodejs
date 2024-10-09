@@ -1,3 +1,4 @@
+import { logger } from '@/observability/logging.js'
 import { LimitedFunctionData } from '@/types/limitedFunctionData.js'
 import { SystemInput } from '@/types/systemInput.js'
 import { SpeckleToken } from '@/types/tokenSchema.js'
@@ -31,7 +32,11 @@ export const buildObservable = async (
   //   return installDependencies
   // }
 
-  const reason = await runProcessWithTimeout({
+  const observableLogger = logger.child({ component: 'observable' })
+
+  const reason = await runProcessWithTimeoutFactory({
+    dataHandler: handleDataFactory({ log: (line) => observableLogger.info({}, line) })
+  })({
     cmd: 'yarn',
     cmdArgs: ['build:observable'],
     extraEnv: { AUTOMATE_DATA: JSON.stringify(envData) },
@@ -40,74 +45,81 @@ export const buildObservable = async (
   return reason
 }
 
-function runProcessWithTimeout(params: {
-  cmd: string
-  cmdArgs: string[]
-  extraEnv: Record<string, string>
-  timeoutMs: number
-  cwd?: string
-}) {
-  const { cmd, cmdArgs, extraEnv, timeoutMs } = params
-  return new Promise<{ status: 'fail' | 'success'; message?: string }>(
-    (resolve, reject) => {
-      // need to pass process.env so that PATH is present and 'yarn' is discoverable
-      const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv }})
+const runProcessWithTimeoutFactory =
+  (deps: { dataHandler: (data: string) => void }) =>
+  (params: {
+    cmd: string
+    cmdArgs: string[]
+    extraEnv: Record<string, string>
+    timeoutMs: number
+    cwd?: string
+  }) => {
+    const { cmd, cmdArgs, extraEnv, timeoutMs } = params
+    return new Promise<{ status: 'fail' | 'success'; message?: string }>(
+      (resolve, reject) => {
+        // need to pass process.env so that PATH is present and 'yarn' is discoverable
+        const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
-      childProc.stdout.setEncoding('utf8')
-      childProc.stdout.on('data', handleData)
+        childProc.stdout.setEncoding('utf8')
+        childProc.stdout.on('data', deps.dataHandler)
 
-      childProc.stderr.setEncoding('utf8')
-      childProc.stderr.on('data', handleData)
+        childProc.stderr.setEncoding('utf8')
+        childProc.stderr.on('data', deps.dataHandler)
 
-      childProc.on('error', (err) => {
-        reject({ status: 'fail', message: JSON.stringify(err) })
-      })
+        childProc.on('error', (err) => {
+          reject({ status: 'fail', message: JSON.stringify(err) })
+        })
 
-      let timedOut = false
+        let timedOut = false
 
-      const timeout = setTimeout(() => {
-        timedOut = true
-        childProc.kill(9)
-        const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
+        const timeout = setTimeout(() => {
+          timedOut = true
+          childProc.kill(9)
+          const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
 
-        reject({ status: 'fail', message: rejectionReason })
-      }, timeoutMs)
+          reject({ status: 'fail', message: rejectionReason })
+        }, timeoutMs)
 
-      childProc.on('close', (code: number) => {
-        if (timedOut) {
-          return // ignore `close` calls after killing (the promise was already rejected)
-        }
+        childProc.on('close', (code: number) => {
+          if (timedOut) {
+            return // ignore `close` calls after killing (the promise was already rejected)
+          }
 
-        clearTimeout(timeout)
+          clearTimeout(timeout)
 
-        if (code === 0) {
-          resolve({ status: 'success' })
-        } else {
-          reject({ status: 'fail', message: `Parser exited with code ${code}` })
-        }
-      })
-    }
-  )
-}
+          if (code === 0) {
+            resolve({ status: 'success' })
+          } else {
+            reject({ status: 'fail', message: `Parser exited with code ${code}` })
+          }
+        })
+      }
+    )
+  }
 
-function handleData(data: Buffer | string) {
-  try {
-    Buffer.isBuffer(data) && (data = data.toString())
-    data.split('\n').forEach((line) => {
-      if (!line) return
+const handleDataFactory =
+  (deps: { log: (line: string) => void }) => (data: Buffer | string) => {
+    try {
+      Buffer.isBuffer(data) && (data = data.toString())
       try {
-        JSON.parse(line) // verify if the data is already in JSON format
-        process.stdout.write(line)
+        JSON.parse(data) // verify if the block of data is already in JSON format
+        process.stdout.write(data)
         process.stdout.write('\n')
       } catch {
-        wrapLogLine(line)
+        //no-op, we'll now try splitting into multiple lines
       }
-    })
-  } catch {
-    wrapLogLine(JSON.stringify(data))
-  }
-}
 
-function wrapLogLine(line: string) {
-  console.log(line)
-}
+      data.split('\n').forEach((line) => {
+        if (!line) return
+        try {
+          JSON.parse(line) // verify if the line is already in JSON format
+          process.stdout.write(line)
+          process.stdout.write('\n')
+        } catch {
+          deps.log(line)
+        }
+      })
+    } catch {
+      deps.log(JSON.stringify(data))
+    }
+  }
