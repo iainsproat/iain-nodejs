@@ -10,6 +10,7 @@ export const systemInputSchema = z.object({
   automationRevisionId: z.string(),
   automationRunId: z.string(),
   functionId: z.string(),
+  functionRunId: z.string(),
   functionName: z.string(),
   functionLogo: z.string()
 })

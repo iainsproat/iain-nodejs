@@ -1,5 +1,6 @@
 import type { GetBlob } from '@/app/clients/blobStorage.js'
 import { mkdir } from 'node:fs/promises'
+import { pipeline } from 'node:stream/promises'
 import * as tar from 'tar'
 
 export const retrieveAndHydrateReportFactory = (deps: { getBlob: GetBlob }) => {
@@ -12,11 +13,11 @@ export const retrieveAndHydrateReportFactory = (deps: { getBlob: GetBlob }) => {
   }) => {
     const blob = await getBlob({ ...params, streamId: params.projectId })
 
-    //FIXME is this async? how to await this?
-    await mkdir('./report2', { recursive: true })
-    blob.data.pipe(
+    await mkdir('./tmp/report', { recursive: true })
+    await pipeline(
+      blob.data,
       tar.x({
-        cwd: './report2'
+        cwd: './tmp/report'
       })
     )
   }

@@ -10,7 +10,7 @@ export const buildObservable = async (
   speckleToken: SpeckleToken
 ) => {
   const { timeOutSeconds } = params
-  await mkdir('/tmp/generated', { recursive: true })
+  await mkdir('./tmp/generated', { recursive: true })
 
   const envData: LimitedFunctionData = {
     speckleServerUrl: systemInput.speckleServerUrl,
@@ -20,52 +20,74 @@ export const buildObservable = async (
     speckleToken
   }
 
-  const reason = await runProcessWithTimeout(
-    'yarn',
-    ['build:observable'],
-    { AUTOMATE_DATA: JSON.stringify(envData) },
-    timeOutSeconds * 1000
-  )
+  // const installDependencies = await runProcessWithTimeout({
+  //   cmd: 'yarn',
+  //   cmdArgs: ['install'],
+  //   extraEnv: {},
+  //   timeoutMs: timeOutSeconds * 1000,
+  //   cwd: './tmp/report'
+  // })
+  // if (installDependencies.status === 'fail') {
+  //   return installDependencies
+  // }
+
+  const reason = await runProcessWithTimeout({
+    cmd: 'yarn',
+    cmdArgs: ['build:observable'],
+    extraEnv: { AUTOMATE_DATA: JSON.stringify(envData) },
+    timeoutMs: timeOutSeconds * 1000
+  })
   return reason
 }
 
-function runProcessWithTimeout(
-  cmd: string,
-  cmdArgs: string[],
-  extraEnv: Record<string, string>,
+function runProcessWithTimeout(params: {
+  cmd: string
+  cmdArgs: string[]
+  extraEnv: Record<string, string>
   timeoutMs: number
-) {
-  return new Promise((resolve, reject) => {
-    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
+  cwd?: string
+}) {
+  const { cmd, cmdArgs, extraEnv, timeoutMs } = params
+  return new Promise<{ status: 'fail' | 'success'; message?: string }>(
+    (resolve, reject) => {
+      // need to pass process.env so that PATH is present and 'yarn' is discoverable
+      const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv }})
 
-    childProc.stdout.on('data', handleData)
+      childProc.stdout.setEncoding('utf8')
+      childProc.stdout.on('data', handleData)
 
-    childProc.stderr.on('data', handleData)
+      childProc.stderr.setEncoding('utf8')
+      childProc.stderr.on('data', handleData)
 
-    let timedOut = false
+      childProc.on('error', (err) => {
+        reject({ status: 'fail', message: JSON.stringify(err) })
+      })
 
-    const timeout = setTimeout(() => {
-      timedOut = true
-      childProc.kill(9)
-      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
+      let timedOut = false
 
-      reject({ status: 'fail', message: rejectionReason })
-    }, timeoutMs)
+      const timeout = setTimeout(() => {
+        timedOut = true
+        childProc.kill(9)
+        const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
 
-    childProc.on('close', (code: number) => {
-      if (timedOut) {
-        return // ignore `close` calls after killing (the promise was already rejected)
-      }
+        reject({ status: 'fail', message: rejectionReason })
+      }, timeoutMs)
 
-      clearTimeout(timeout)
+      childProc.on('close', (code: number) => {
+        if (timedOut) {
+          return // ignore `close` calls after killing (the promise was already rejected)
+        }
 
-      if (code === 0) {
-        resolve({ status: 'success' })
-      } else {
-        reject({ status: 'fail', message: `Parser exited with code ${code}` })
-      }
-    })
-  })
+        clearTimeout(timeout)
+
+        if (code === 0) {
+          resolve({ status: 'success' })
+        } else {
+          reject({ status: 'fail', message: `Parser exited with code ${code}` })
+        }
+      })
+    }
+  )
 }
 
 function handleData(data: Buffer | string) {

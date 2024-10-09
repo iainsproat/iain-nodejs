@@ -78,8 +78,8 @@ Once the GitHub Action has built the image, it is sent to Speckle Automate. When
     ```bash
     docker run --rm speckle_automate_nodets_example \
     yarn start \
-    '{"projectId": "1234", "modelId": "1234", "branchName": "myBranch", "versionId": "1234", "speckleServerUrl": "https://speckle.xyz", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "1234", "functionId": "1234", "functionName": "my function", "functionLogo": "base64EncodedPng"}' \
-    '{}' \
+    '{"projectId": "c2ee8ab5fa", "modelId": "9285df1ccb", "branchName": "steelplates.ifc", "versionId": "8b1a9b830a", "speckleServerUrl": "https://latest.speckle.systems/", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "1234", "functionId": "1234", "functionName": "my function", "functionRunId": "1234", "functionLogo": "base64EncodedPng"}' \
+    '{"blobId": "myBlobId"}' \
     yourSpeckleServerAuthenticationToken
     ```
 
@@ -89,8 +89,8 @@ Let's explain this in more detail:
 
 The line `yarn start` is the command run inside the Docker Container Image. The rest of the command is the arguments passed to the command. The arguments are:
 
-- `'{"projectId": "1234", "modelId": "1234", "branchName": "myBranch", "versionId": "1234", "speckleServerUrl": "https://speckle.xyz", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "1234", "functionId": "1234", "functionName": "my function", "functionLogo": "base64EncodedPng"}'` - the metadata that describes the automation and the function.
-- `{}` - the input parameters for the function the Automation creator can set. Here, they are blank, but you can add your parameters to test your function.
+- `'{"projectId": "1234", "modelId": "1234", "branchName": "myBranch", "versionId": "1234", "speckleServerUrl": "https://speckle.xyz", "automationId": "1234", "automationRevisionId": "1234", "automationRunId": "", "functionId": "1234", "functionName": "my function", "functionRunId": "1234", "functionLogo": "base64EncodedPng"}'` - the metadata that describes the automation and the function. Providing an empty functionRunId causes a test run to be created on the server; this requires the automation to be a test automation.
+- `{"blobId": "1234"}` - the input parameters for the function the Automation creator can set. Here, they are blank, but you can add your parameters to test your function.
 - `yourSpeckleServerAuthenticationToken`—the authentication token for the Speckle Server that the Automation can connect to. This is required to interact with the Speckle Server, for example, to get data from the Model.
 
 ## Resources
