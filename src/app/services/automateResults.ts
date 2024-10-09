@@ -2,53 +2,16 @@ import type { GqlClient } from '@/app/clients/graphql.js'
 import { gql } from 'graphql-request'
 import { z } from 'zod'
 
-// const automationResultCase = z.object({
-//   category: z.string(),
-//   level: z.string(), //TODO
-//   objectIds: z.string().array(),
-//   message: z.string().optional(),
-//   metadata: z.record(z.any()).optional(),
-//   visualOverrides: z.record(z.any()).optional()
-// })
-
-// const automationResultSchema = z.object({
-//   elapsed: z.number().default(0),
-//   resultView: z.string().optional(),
-//   resultVersions: z.string().array(),
-//   blobs: z.string().array(),
-//   runStatus: z
-//     .union([
-//       z.literal('INITIALIZING'),
-//       z.literal('RUNNING'),
-//       z.literal('FAILED'),
-//       z.literal('SUCCEEDED'),
-//       z.literal('EXCEPTION')
-//     ])
-//     .default('RUNNING'),
-//   statusMessage: z.string().optional(),
-//   objectResults: automationResultCase.array()
-// })
-
-// type AutomationResult = z.infer<typeof automationResultSchema>
-
-const blobMetadataSchema = z.object({
-  createdAt: z.string(),
-  fileHash: z.string().optional(),
-  fileName: z.string(),
-  fileSize: z.number().optional(),
-  fileType: z.string(),
-  id: z.string(),
-  streamId: z.string(),
-  uploadError: z.string().optional(),
-  uploadStatus: z.number(),
-  userId: z.string()
+const automationFunctionRunStatusReportResultSchema = z.object({
+  automateFunctionRunStatusReport: z.boolean()
 })
 
-type BlobMetadata = z.infer<typeof blobMetadataSchema>
+type AutomationFunctionRunStatusReportResult = z.infer<typeof automationFunctionRunStatusReportResultSchema>
 
 export type PublishAutomateResult = (params: {
+  functionRunId: string
   storedBlobId: string
-}) => Promise<BlobMetadata>
+}) => Promise<AutomationFunctionRunStatusReportResult>
 
 export const publishAutomateResultFactory = (deps: {
   gqlClient: GqlClient
@@ -56,20 +19,41 @@ export const publishAutomateResultFactory = (deps: {
   const { gqlClient } = deps
 
   return async (params) => {
-    const { storedBlobId } = params
+    const { functionRunId, storedBlobId } = params
     const completeAutomationResult = await gqlClient({
-      graphqlDocument: gql`{
-        mutation automateFunctionRunStatusReport($storedBlobId: String!) {
-          blobs: [
-            $storedBlobId
-          ]
+      graphqlDocument: gql`
+        mutation AutomateFunctionRunStatusReport(
+          $functionRunId: String!
+          $status: AutomateRunStatus!
+          $statusMessage: String
+          $objectResults: [JSONObject]
+          $blobIds: [String]
+          $contextView: String
+        ) {
+          automateFunctionRunStatusReport(
+            input: {
+              functionRunId: $functionRunId
+              status: $status
+              statusMessage: $statusMessage
+              contextView: $contextView
+              results: {
+                version: 1
+                values: { objectResults: $objectResults, blobIds: $blobIds }
+              }
+            }
+          )
         }
-      }`,
+      `,
       variables: {
-        storedBlobId
+        functionRunId,
+        status: 'SUCCEEDED',
+        statusMessage: 'Report has been generated and uploaded',
+        objectResults: [],
+        blobIds: [storedBlobId],
+        contextView: ''
       }
     })
 
-    return blobMetadataSchema.parse(completeAutomationResult)
+    return automationFunctionRunStatusReportResultSchema.parse(completeAutomationResult)
   }
 }

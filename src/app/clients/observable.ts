@@ -10,7 +10,7 @@ export const buildObservable = async (
   speckleToken: SpeckleToken
 ) => {
   const { timeOutSeconds } = params
-  await mkdir('/tmp/generated', { recursive: true })
+  await mkdir('./tmp/generated', { recursive: true })
 
   const envData: LimitedFunctionData = {
     speckleServerUrl: systemInput.speckleServerUrl,
@@ -25,7 +25,7 @@ export const buildObservable = async (
   //   cmdArgs: ['install'],
   //   extraEnv: {},
   //   timeoutMs: timeOutSeconds * 1000,
-  //   cwd: '/tmp/report'
+  //   cwd: './tmp/report'
   // })
   // if (installDependencies.status === 'fail') {
   //   return installDependencies
@@ -35,8 +35,7 @@ export const buildObservable = async (
     cmd: 'yarn',
     cmdArgs: ['build:observable'],
     extraEnv: { AUTOMATE_DATA: JSON.stringify(envData) },
-    timeoutMs: timeOutSeconds * 1000,
-    cwd: '/tmp/report'
+    timeoutMs: timeOutSeconds * 1000
   })
   return reason
 }
@@ -46,16 +45,23 @@ function runProcessWithTimeout(params: {
   cmdArgs: string[]
   extraEnv: Record<string, string>
   timeoutMs: number
-  cwd: string
+  cwd?: string
 }) {
-  const { cmd, cmdArgs, extraEnv, timeoutMs, cwd } = params
+  const { cmd, cmdArgs, extraEnv, timeoutMs } = params
   return new Promise<{ status: 'fail' | 'success'; message?: string }>(
     (resolve, reject) => {
-      const childProc = spawn(cmd, cmdArgs, { cwd, env: { ...extraEnv } })
+      // need to pass process.env so that PATH is present and 'yarn' is discoverable
+      const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv }})
 
+      childProc.stdout.setEncoding('utf8')
       childProc.stdout.on('data', handleData)
 
+      childProc.stderr.setEncoding('utf8')
       childProc.stderr.on('data', handleData)
+
+      childProc.on('error', (err) => {
+        reject({ status: 'fail', message: JSON.stringify(err) })
+      })
 
       let timedOut = false
 

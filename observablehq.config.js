@@ -1,4 +1,4 @@
 export default {
-  root: '/tmp/report',
-  output: '/tmp/generated'
+  root: 'tmp/report',
+  output: 'tmp/generated'
 }

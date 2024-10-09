@@ -7,6 +7,7 @@ import { getBlob, storeBlob } from '@/app/clients/blobStorage.js'
 import { compressAndPublishResultsFactory } from '@/app/services/compressAndPublishResults.js'
 import { publishAutomateResultFactory } from '@/app/services/automateResults.js'
 import { graphqlClientFactory } from '@/app/clients/graphql.js'
+import { createTestRunFactory } from './services/testAutomationRun.js'
 
 export type ObservableRunner = (params: {
   systemInput: SystemInput
@@ -25,12 +26,14 @@ export const observableRunnerFactory = (): ObservableRunner => {
       token: speckleToken
     })
 
+    console.log('🛠️ Building with Observable')
     const result = await buildObservable(
       { timeOutSeconds: 10 * 60 },
       systemInput,
       speckleToken
     )
     console.log(`🚀 Built the Observable application 🎶: ${JSON.stringify(result)}`)
+    if (result.status !== 'success') return Promise.reject()
 
     const gqlClient = graphqlClientFactory({
       speckleServerUrl: systemInput.speckleServerUrl,
@@ -39,6 +42,9 @@ export const observableRunnerFactory = (): ObservableRunner => {
 
     const publishResults = await compressAndPublishResultsFactory({
       storeBlob,
+      createTestRun: createTestRunFactory({
+        gqlClient
+      }),
       publishAutomateResult: publishAutomateResultFactory({
         gqlClient
       })
@@ -46,10 +52,12 @@ export const observableRunnerFactory = (): ObservableRunner => {
       ...systemInput,
       ...functionInput,
       token: speckleToken,
-      outputDirPath: '/tmp/generated'
+      outputDirPath: './tmp/generated'
     })
-    console.log(
-      `🏁 Published the Observable application: ${JSON.stringify(publishResults)}`
-    )
+    if (!publishResults) {
+      console.error('Error while publishing automation results')
+    } else {
+      console.log(`🏁 Published the Observable application`)
+    }
   }
 }

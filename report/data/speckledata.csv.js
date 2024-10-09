@@ -2,6 +2,9 @@ import { csvFormat } from 'd3-dsv'
 import ObjectLoader from '@speckle/objectloader'
 import { gql, request } from 'graphql-request'
 
+if (!process.env.AUTOMATE_DATA) {
+  throw new Error('AUTOMATE_DATA environment variable is not set')
+}
 
 const automateData = JSON.parse(process.env.AUTOMATE_DATA)
 
